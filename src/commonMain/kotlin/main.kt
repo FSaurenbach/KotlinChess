@@ -7,7 +7,8 @@ import com.soywiz.korge.view.*
 import com.soywiz.korim.color.Colors
 import com.soywiz.korio.lang.cancel
 import com.soywiz.korma.geom.Point
-
+var whitePieces: List<Piece>? = null
+var blackPieces: List<Piece>? = null
 var oldSquare: Point? = null
 var pieceClicked = false // whether a piece has been clicked
 var clickedPiece: Piece? = null // the piece that has been clicked
@@ -39,17 +40,20 @@ class MyScene : Scene() {
                 }
             }
         }
-        val p = Piece("white", "pawn", 0, 0)
-        var p2 = Piece("black", "pawn", 0, 5)
-        addChild(p)
-        addChild(p2)
+        val whitePawn = Piece("white", "pawn", 0, 0)
+        var blackPawn = Piece("black", "pawn", 0, 5)
+
+        addChild(whitePawn)
+        addChild(blackPawn)
+        whitePieces = listOf(whitePawn)
+        blackPieces = listOf(blackPawn)
     }
 }
 
 fun tileClicked(tile: SolidRect) {
     val (x, y) = deBoardPosition(tile) // get its board position
-    tile.x
-    tile.y
+    val oldX = oldSquare?.x?.div(80)
+    val oldY = oldSquare?.y?.div(80)
     if (oldSquare != null) {
         println("oldX: ${oldSquare!!.x/80}, oldY: ${oldSquare!!.y/80}")
     }
@@ -58,22 +62,27 @@ fun tileClicked(tile: SolidRect) {
     /* A piece has been clicked already and the user has clicked a tile to move on.
     The move function will now check if the move is valid*/
     if (pieceClicked && (oldSquare != BoardPosition(x, y))) {
-        println("condition 1")
-        clickedPiece!!.move(x, y, tile)
+        println("condition 1 color: ${clickedPiece!!.color}, type: ${clickedPiece!!.type}, x: ${oldX}, y: ${oldY}, " +
+            "x: $x , y: $y")
+        clickedPiece!!.move(x, y, oldX!!.toInt(), oldY!!.toInt(), clickedPiece!!.type, clickedPiece!!.color)
         pieceClicked = false
         clickedPiece = null
     }
     /* A piece has not been clicked yet, so the user is trying to select a piece*/
-    else {
-        tile.onCollision {
-            if (it is Piece) {
+    else if(!pieceClicked) {
+        var collision = false
 
-                println("cond 2")
+        tile.onCollision {
+            if (it is Piece && !collision) {
+
+                collision = true
+                println("condition 2 color: ${it.color}, type: ${it.type}, x: ${oldX}, y: ${oldY}, " +
+                    "x: $x , y: $y")
                 pieceClicked = true
                 clickedPiece = it
                 oldSquare = BoardPosition(x, y)
-            }
 
+            }// cancel the collision listener to avoid multiple clicks on the same piece
         }.cancel()
     }
     /*else {
@@ -105,18 +114,21 @@ fun BoardPosition(x: Int, y: Int): Point {
 }
 
 class Piece(var color: String, var type: String, pieceX:Int, pieceY:Int) : Container() {
-    private var piece: SolidRect = solidRect(80, 80, Colors.RED)
+    var piece: SolidRect = solidRect(50, 50, Colors.RED)
+    // align the piece so on pieceX and pieceY the tile doesnt start from the top left corner but from the center
+
 
     init {
         piece.pos = BoardPosition(pieceX, pieceY)
+
         piece.apply {
             mouseEnabled = false
         }
     }
 
     // Move the piece to a new position on the board
-    fun move(x: Int, y: Int, tile: SolidRect) {
-        val (oldX, oldY) = deBoardPosition(piece)
+    fun move(x: Int, y: Int, oldX: Int, oldY: Int, type: String, color: String) {
+        //val (oldX, oldY) = deBoardPosition(piece)
 
         if (checkMove(x, y, oldX, oldY, type, color)) {
 
@@ -133,11 +145,22 @@ class Piece(var color: String, var type: String, pieceX:Int, pieceY:Int) : Conta
         println(color)
         when (type) {
             "pawn" -> {
+                println("newX: $newX, oldX: $oldX, newY: $newY, oldY: $oldY")
+
                 if (color == "white") {
                     println("case")
-
                     if (newX == oldX && newY == oldY + 1) {
                         return true
+                    }
+                    else if (newX == oldX+1 ){
+                        // check if there is a piece at newX, newY
+                        // if there is a piece, check if it is an enemy piece
+                        // if it is an enemy piece, return true
+                        // else return false
+                        for (piece in blackPieces) {
+                            
+                        }
+
                     }
                 } else {
                     if (newX == oldX && newY == oldY - 1) {
