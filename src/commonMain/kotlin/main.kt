@@ -41,7 +41,7 @@ class MyScene : Scene() {
             }
         }
         val whitePawn = Piece("white", "pawn", 0, 0)
-        var blackPawn = Piece("black", "pawn", 0, 5)
+        var blackPawn = Piece("black", "pawn", 1, 5)
 
         addChild(whitePawn)
         addChild(blackPawn)
@@ -152,13 +152,19 @@ class Piece(var color: String, var type: String, pieceX:Int, pieceY:Int) : Conta
                     if (newX == oldX && newY == oldY + 1) {
                         return true
                     }
-                    else if (newX == oldX+1 ){
+                    else if (newX == oldX+1&&newY == oldY+1 ){
                         // check if there is a piece at newX, newY
                         // if there is a piece, check if it is an enemy piece
                         // if it is an enemy piece, return true
                         // else return false
-                        for (piece in blackPieces) {
-                            
+                        for (piece in blackPieces!!) {
+                            println("hi")
+                            val (x, y) = deBoardPosition(piece.piece)
+                            if (x == newX && y == newY) {
+                                println("hi")
+                                piece.removeFromParent()
+                                return true
+                            }
                         }
 
                     }
