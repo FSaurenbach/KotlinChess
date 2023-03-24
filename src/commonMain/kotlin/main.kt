@@ -52,8 +52,8 @@ class MyScene : Scene() {
         }
 
         // Create two chess pieces and add them to the scene
-        val whitePawn = Piece("white", "pawn", 0, 0)
-        val blackPawn = Piece("black", "pawn", 1, 5)
+        val whitePawn = Piece("white", "pawn", 0, 1)
+        val blackPawn = Piece("black", "pawn", 1, 6)
 
         addChild(whitePawn)
         addChild(blackPawn)
@@ -121,59 +121,3 @@ fun deBoardPosition(tile: SolidRect) = Pair(tile.x.toInt() / tileSize, tile.y.to
 // This function converts a board position to a tile
 fun boardPosition(x: Int, y: Int) = Point(x * tileSize, y * tileSize)
 
-class Piece(var color: String, var type: String, pieceX: Int, pieceY: Int) : Container() {
-
-    // create a SolidRect object with the tile size and color red to represent the piece
-    private var piece: SolidRect = solidRect(tileSize, tileSize, Colors.RED)
-
-    // initialize the piece's position on the board
-    init {
-        piece.pos = boardPosition(pieceX, pieceY)
-
-        // make the piece non-interactive with the mouse
-        piece.apply {
-            mouseEnabled = false
-        }
-    }
-
-    // move the piece to a new position if the move is valid
-    fun move(x: Int, y: Int, oldX: Int, oldY: Int, type: String, color: String) {
-        if (checkMove(x, y, oldX, oldY, type, color)) {
-            piece.pos = boardPosition(x, y)
-        }
-    }
-
-    // check if a move is valid based on the piece's type, color, and the old and new positions
-    private fun checkMove(newX: Int, newY: Int, oldX: Int, oldY: Int, type: String, color: String): Boolean {
-
-        when (type) {
-            "pawn" -> {
-                // if the piece is a pawn and its color is white
-                if (color == "white") {
-                    if (newX == oldX && newY == oldY + 1) {
-                        // if the pawn is moving one square forward
-                        return true
-                    } else if ((newX == oldX + 1 && newY == oldY + 1) || (newX == oldX -1 && newY == oldY +1)) {
-                        // if the pawn is capturing a black piece diagonally
-                        for (piece in blackPieces!!) {
-                            val (x, y) = deBoardPosition(piece.piece)
-                            if (x == newX && y == newY) {
-                                // remove the captured piece from the board
-                                piece.removeFromParent()
-                                return true
-                            }
-                        }
-                    }
-                } else if (color == "black"){
-                    // if the piece is a pawn and its color is black
-                    if (newX == oldX && newY == oldY - 1) {
-                        // if the pawn is moving one square forward
-                        return true
-                    }
-                }
-            }
-        }
-        // if the move is not valid based on the piece's type, color, and the old and new positions
-        return false
-    }
-}
