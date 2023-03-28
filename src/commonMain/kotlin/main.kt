@@ -1,18 +1,28 @@
 // Import required libraries
-import com.soywiz.korge.*
-import com.soywiz.korge.input.*
-import com.soywiz.korge.scene.*
+import com.soywiz.korge.Korge
+import com.soywiz.korge.input.onClick
+import com.soywiz.korge.scene.Scene
+import com.soywiz.korge.scene.sceneContainer
 import com.soywiz.korge.view.*
-import com.soywiz.korim.color.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korma.geom.*
+import com.soywiz.korim.color.Colors
+import com.soywiz.korim.format.readBitmap
+import com.soywiz.korio.file.std.resourcesVfs
+import com.soywiz.korio.lang.cancel
+import com.soywiz.korma.geom.Point
+import kotlin.collections.List
+import kotlin.collections.listOf
+import kotlin.collections.mutableMapOf
+import kotlin.collections.plus
+import kotlin.collections.set
 
 // Define variables for the chess pieces, old square, and whether a piece has been clicked
 var whitePieces: List<Piece>? = null
 var blackPieces: List<Piece>? = null
+var allPieces: List<Piece>? = null
 var oldSquare: Point? = null
 var pieceClicked = false
 var clickedPiece: Piece? = null
+val rectsBoard = mutableMapOf<Pair<Int, Int>, View>()
 
 // Define constants for the board size and tile size
 const val boardSize = 8
@@ -42,7 +52,23 @@ class MyScene : Scene() {
                     val tile = solidRect(tileSize, tileSize, tileColor)
                     // Set the tile position
                     tile.position(tileSize * j, tileSize * i)
+                    rectsBoard[j to i] = tile
+                    val letters2 = "01234567"
+                    for (b in 0..7) {
+                        text(
+                            "${letters2[b]}",
+                            textSize = 25.0,
+                            color = if (b % 2 != 0) Colors.BLACK else Colors.WHITE
+                        ).xy(
+                            8.0 * tileSize - 15.0, 1.0 + b * tileSize
+                        ).addTo(this)
+                    }
+                    val letters = "01234567"
+                    for (b2 in 0..7) {
+                        text(letters[b2] + "", textSize = 25.0, color = if (b2 % 2 != 0) Colors.BLACK else Colors.WHITE)
 
+                            .xy(3.0 + b2 * tileSize, 8 * tileSize - 30.0).addTo(this)
+                    }
                     // Add the tile to the container
                     addChild(tile)
                     // Add an onClick event listener to the tile
@@ -52,13 +78,17 @@ class MyScene : Scene() {
         }
 
         // Create two chess pieces and add them to the scene
-        val whitePawn = Piece("white", "pawn", 0, 1)
-        val blackPawn = Piece("black", "pawn", 1, 6)
-
+        val whitePawn = Piece("white", "pawn", 0, 1, resourcesVfs["whitePawn.png"].readBitmap())
+        val blackPawn = Piece("black", "pawn", 3, 6, resourcesVfs["whitePawn.png"].readBitmap())
+        val whiteRook = Piece("white", "rook", 0, 0, resourcesVfs["whitePawn.png"].readBitmap())
+        val blackRook = Piece("black", "rook", 7, 7, resourcesVfs["whitePawn.png"].readBitmap())
         addChild(whitePawn)
         addChild(blackPawn)
-        whitePieces = listOf(whitePawn)
-        blackPieces = listOf(blackPawn)
+        addChild(whiteRook)
+        addChild(blackRook)
+        whitePieces = listOf(whitePawn, whiteRook)
+        blackPieces = listOf(blackPawn, blackRook)
+        allPieces = whitePieces!! + blackPieces!!
     }
 }
 
@@ -71,13 +101,6 @@ fun tileClicked(tile: SolidRect) {
     val oldX = oldSquare?.x?.div(80)
     val oldY = oldSquare?.y?.div(80)
 
-    /*
-    if (oldSquare != null) {
-        println("oldX: ${oldSquare!!.x / 80}, oldY: ${oldSquare!!.y / 80}")
-    }
-    println("x: $x, y: $y")
-    println("pieceClicked: $pieceClicked")
-    */
 
     /* A piece has been clicked already and the user has clicked a tile to move on.
     The move function will now check if the move is valid*/
@@ -116,7 +139,7 @@ fun tileClicked(tile: SolidRect) {
 }
 
 // This function converts a tile to its board position
-fun deBoardPosition(tile: SolidRect) = Pair(tile.x.toInt() / tileSize, tile.y.toInt() / tileSize)
+fun deBoardPosition(tile: View) = Pair(tile.x.toInt() / tileSize, tile.y.toInt() / tileSize)
 
 // This function converts a board position to a tile
 fun boardPosition(x: Int, y: Int) = Point(x * tileSize, y * tileSize)

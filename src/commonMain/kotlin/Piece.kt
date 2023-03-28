@@ -1,18 +1,20 @@
-import com.soywiz.korge.view.Container
-import com.soywiz.korge.view.SolidRect
-import com.soywiz.korge.view.solidRect
-import com.soywiz.korim.color.Colors
+import com.soywiz.korge.view.*
+import com.soywiz.korim.bitmap.*
+import kotlin.math.*
 
-class Piece(var color: String, var type: String, pieceX: Int, pieceY: Int) : Container() {
+class Piece(var color: String, var type: String, pieceX: Int, pieceY: Int, bitmap: Bitmap) : Container() {
 
     // create a SolidRect object with the tile size and color red to represent the piece
-    private var piece: SolidRect = solidRect(tileSize, tileSize, Colors.RED)
+    //private var piece = solidRect(tileSize, tileSize, Colors.RED)
+    private var piece = image(bitmap).apply {
+        smoothing = false
+
+    }.size(tileSize - 10, tileSize - 10)
     private var pawnFirstMove = false
+
     // initialize the piece's position on the board
     init {
-        if (type == "pawn"){
-            pawnFirstMove = true
-        }
+        pawnFirstMove = type == "pawn"
         piece.pos = boardPosition(pieceX, pieceY)
 
         // make the piece non-interactive with the mouse
@@ -23,6 +25,7 @@ class Piece(var color: String, var type: String, pieceX: Int, pieceY: Int) : Con
 
     // move the piece to a new position if the move is valid
     fun move(x: Int, y: Int, oldX: Int, oldY: Int, type: String, color: String) {
+
         if (checkMove(x, y, oldX, oldY, type, color)) {
             piece.pos = boardPosition(x, y)
         }
@@ -30,60 +33,100 @@ class Piece(var color: String, var type: String, pieceX: Int, pieceY: Int) : Con
 
     // check if a move is valid based on the piece's type, color, and the old and new positions
     private fun checkMove(newX: Int, newY: Int, oldX: Int, oldY: Int, type: String, color: String): Boolean {
-
+        println(type)
         when (type) {
             "pawn" -> {
-                // if the piece is a pawn and its color is white
-                if (color == "white") {
-                    if (newX == oldX && newY == oldY + 1) {
-                        // if the pawn is moving one square forward
-                        pawnFirstMove = false
-                        return true
-                    }
-                    else if (pawnFirstMove && newX == oldX && newY == oldY + 2) {
-                        // if the pawn is moving two squares forward
-                        pawnFirstMove = false
-                        return true
-                    }
+                println("pawn")
+                val direction = if (color == "white") 1 else -1
+                val oneSquareForward = newY == oldY + direction && newX == oldX
+                val twoSquaresForward = pawnFirstMove && newY == oldY + 2 * direction && newX == oldX
+                val captureLeft = newX == oldX - 1 && newY == oldY + direction
+                val captureRight = newX == oldX + 1 && newY == oldY + direction
 
-                    else if ((newX == oldX + 1 && newY == oldY + 1) || (newX == oldX -1 && newY == oldY +1)) {
-                        // if the pawn is capturing a black piece diagonally
-                        for (piece in blackPieces!!) {
-                            val (x, y) = deBoardPosition(piece.piece)
-                            if (x == newX && y == newY) {
-                                // remove the captured piece from the board
-                                piece.removeFromParent()
-                                pawnFirstMove = false
-                                return true
-                            }
-                        }
-                    }
-                }
-                else if (color == "black") {
-                    if (newX == oldX && newY == oldY - 1) {
-                        // if the pawn is moving one square forward
-                        pawnFirstMove = false
-                        return true
-                    }
-                    else if (pawnFirstMove && newX == oldX && newY == oldY - 2) {
-                        // if the pawn is moving two squares forward
-                        pawnFirstMove = false
-                        return true
-                    }
-                    else if ((newX == oldX + 1 && newY == oldY - 1) || (newX == oldX -1 && newY == oldY -1)) {
-                        // if the pawn is capturing a white piece diagonally
-                        for (piece in whitePieces!!) {
-                            val (x, y) = deBoardPosition(piece.piece)
-                            if (x == newX && y == newY) {
-                                // remove the captured piece from the board
-                                piece.removeFromParent()
-                                pawnFirstMove = false
-                                return true
-                            }
+                if (oneSquareForward || twoSquaresForward) {
+                    pawnFirstMove = false
+                    return true
+                } else if (captureLeft || captureRight) {
+                    val pieces = if (color == "white") blackPieces else whitePieces
+                    for (piece in pieces!!) {
+                        val (x, y) = deBoardPosition(piece.piece)
+                        if (x == newX && y == newY) {
+                            piece.removeFromParent()
+                            pawnFirstMove = false
+                            return true
                         }
                     }
                 }
             }
+
+            "rook" -> {
+                var canMove = true
+                if (newX == oldX && newY != oldY) {
+                    val direction = if (newY > oldY) 1 else -1
+                    if (direction == -1) {
+                        for (i in oldY + direction downTo newY step abs(direction)) {
+                            println(i)
+                            for (piece in allPieces!!) {
+                                val (x, y) = deBoardPosition(piece.piece)
+                                if (x == newX && y == i) {
+                                    println("can't move x: $newX, y: $i")
+                                    canMove = false
+                                }
+                            }
+                        }
+                    }
+                    if (direction == 1) {
+                        for (i in oldY + direction until newY step direction) {
+                            println(i)
+                            for (piece in allPieces!!) {
+                                val (x, y) = deBoardPosition(piece.piece)
+                                if (x == newX && y == i) {
+                                    println("can't move x: $newX, y: $i")
+                                    canMove = false
+                                }
+                            }
+                        }
+                    }
+
+
+                }
+                /* Nach rechts und links */
+                else if (newY == oldY && newX != oldX) {
+                    val direction = if (newX > oldX) 1 else -1
+                    if (direction == 1) {
+                        for (i in oldX + direction until newX step direction) {
+                            println("fa $i")
+                            for (piece in allPieces!!) {
+                                val (x, y) = deBoardPosition(piece.piece)
+                                if (x == i && y == newY) {
+                                    println("can't move x: $i, y: $newY")
+                                    canMove = false
+                                }
+                            }
+                        }
+                    } else {
+                        for (i in oldX + direction downTo newX step abs(direction)) {
+                            println("dasfa $i")
+                            for (piece in allPieces!!) {
+                                val (x, y) = deBoardPosition(piece.piece)
+                                if (x == i && y == newY) {
+                                    println("can't move x: $i, y: $newY")
+                                    canMove = false
+                                }
+                            }
+                        }
+                    }
+
+                } else if (newX != oldX) {
+                    canMove = false
+                }
+
+                if (canMove) {
+                    return true
+                }
+            }
+
+
         }
         // if the move is not valid based on the piece's type, color, and the old and new positions
         return false
