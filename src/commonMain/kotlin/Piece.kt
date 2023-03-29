@@ -1,6 +1,8 @@
-import com.soywiz.korge.view.*
-import com.soywiz.korim.bitmap.*
-import kotlin.math.*
+import com.soywiz.korge.view.Container
+import com.soywiz.korge.view.image
+import com.soywiz.korge.view.size
+import com.soywiz.korim.bitmap.Bitmap
+import kotlin.math.abs
 
 class Piece(var color: String, var type: String, pieceX: Int, pieceY: Int, bitmap: Bitmap) : Container() {
 
@@ -67,23 +69,31 @@ class Piece(var color: String, var type: String, pieceX: Int, pieceY: Int, bitma
                         for (i in oldY + direction downTo newY step abs(direction)) {
                             println(i)
                             for (piece in allPieces!!) {
+
                                 val (x, y) = deBoardPosition(piece.piece)
-                                if (x == newX && y == i) {
-                                    println("can't move x: $newX, y: $i")
-                                    canMove = false
+                                if (x == newX && y == newY) {
+                                    piece.removeFromParent()
+                                    return true
                                 }
+                                if (x == newX && y == i) return false
                             }
                         }
                     }
                     if (direction == 1) {
                         for (i in oldY + direction until newY step direction) {
+
                             println(i)
                             for (piece in allPieces!!) {
                                 val (x, y) = deBoardPosition(piece.piece)
-                                if (x == newX && y == i) {
-                                    println("can't move x: $newX, y: $i")
-                                    canMove = false
+                                if (x == newX && y == newY) {
+                                    println("Rook took a piece Position: x: $newX, y: $newY")
+                                    piece.removeFromParent()
+                                    return true
                                 }
+
+                                if (x == newX && y == i) return false
+
+
                             }
                         }
                     }
@@ -98,32 +108,36 @@ class Piece(var color: String, var type: String, pieceX: Int, pieceY: Int, bitma
                             println("fa $i")
                             for (piece in allPieces!!) {
                                 val (x, y) = deBoardPosition(piece.piece)
-                                if (x == i && y == newY) {
-                                    println("can't move x: $i, y: $newY")
-                                    canMove = false
+                                if (x == newX && y == newY) {
+                                    println("Rook took a piece Position: x: $newX, y: $newY")
+                                    piece.removeFromParent()
+                                    return true
                                 }
+                                if (x == i && y == newY) return false
+
                             }
                         }
-                    } else {
+                    }
+                    if (direction == -1) {
                         for (i in oldX + direction downTo newX step abs(direction)) {
-                            println("dasfa $i")
                             for (piece in allPieces!!) {
                                 val (x, y) = deBoardPosition(piece.piece)
-                                if (x == i && y == newY) {
-                                    println("can't move x: $i, y: $newY")
-                                    canMove = false
+                                if (x == newX && y == newY) {
+                                    println("Rook took a piece Position: x: $newX, y: $newY")
+                                    piece.removeFromParent()
+                                    return true
                                 }
+                                if (x == i && y == newY) return false
                             }
                         }
                     }
 
                 } else if (newX != oldX) {
-                    canMove = false
+                    return false
                 }
 
-                if (canMove) {
-                    return true
-                }
+                return true
+
             }
 
 
